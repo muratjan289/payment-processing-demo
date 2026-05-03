@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: payment-demo-postgres
+    environment:
+      POSTGRES_DB: payment_demo
+      POSTGRES_USER: payment_user
+      POSTGRES_PASSWORD: payment_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - payment_demo_postgres_data:/var/lib/postgresql/data
+    networks:
+      - payment-demo-network
+
+  redis:
+    image: redis:7
+    container_name: payment-demo-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - payment-demo-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: payment-demo-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: payment_user
+      RABBITMQ_DEFAULT_PASS: payment_password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - payment-demo-network
+
+volumes:
+  payment_demo_postgres_data:
+
+networks:
+  payment-demo-network:
+    driver: bridge

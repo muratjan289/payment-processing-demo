@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: payment-processing-demo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_demo
+    username: payment_user
+    password: payment_password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/changelog-master.yaml
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2s
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: payment_user
+    password: payment_password
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.murat.paymentdemo: DEBUG
+    org.hibernate.SQL: DEBUG

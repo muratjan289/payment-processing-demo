@@ -1,0 +1,15 @@
+package com.murat.paymentdemo;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+
+@Import(TestcontainersConfiguration.class)
+@SpringBootTest
+class PaymentProcessingDemoApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
