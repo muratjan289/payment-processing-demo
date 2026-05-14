@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,12 +29,26 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentHistoryService paymentHistoryService;
     private final PaymentMapper paymentMapper;
+    private final IdempotencyService idempotencyService;
+
 
     @Transactional
     public PaymentResponse createPayment(CreatePaymentRequest request){
-        return  paymentRepository.findByIdempotencyKey(request.idempotencyKey())
-                .map(paymentMapper::toPaymentResponse)
-                .orElseGet(() -> createNewPayment(request));
+        Optional<UUID> existingPaymentId = idempotencyService.findPaymentId(request.idempotencyKey());
+        if(existingPaymentId.isPresent()){
+            PaymentEntity payment = findPaymentOrThrow(existingPaymentId.get());
+            return paymentMapper.toPaymentResponse(payment);
+        }
+
+        Optional<PaymentEntity> existingPayment  =paymentRepository.findByIdempotencyKey(request.idempotencyKey());
+
+        if(existingPayment.isPresent()){
+            PaymentEntity payment = existingPayment.get();
+            idempotencyService.savePaymentId(request.idempotencyKey(), payment.getId());
+            return paymentMapper.toPaymentResponse(payment);
+        }
+
+        return  createNewPayment(request);
     }
 
     @Transactional(readOnly = true)
@@ -113,6 +128,10 @@ public class PaymentService {
                 savedPayment.getId(),
                 null,
                 savedPayment.getStatus()
+        );
+        idempotencyService.savePaymentId(
+                request.idempotencyKey(),
+                savedPayment.getId()
         );
         return paymentMapper.toPaymentResponse(savedPayment);
     }
