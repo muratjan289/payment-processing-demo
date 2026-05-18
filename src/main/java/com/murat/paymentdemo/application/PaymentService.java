@@ -30,6 +30,7 @@ public class PaymentService {
     private final PaymentHistoryService paymentHistoryService;
     private final PaymentMapper paymentMapper;
     private final IdempotencyService idempotencyService;
+    private final PaymentEventService paymentEventService;
 
 
     @Transactional
@@ -38,6 +39,7 @@ public class PaymentService {
         if(existingPaymentId.isPresent()){
             PaymentEntity payment = findPaymentOrThrow(existingPaymentId.get());
             return paymentMapper.toPaymentResponse(payment);
+
         }
 
         Optional<PaymentEntity> existingPayment  =paymentRepository.findByIdempotencyKey(request.idempotencyKey());
@@ -74,6 +76,7 @@ public class PaymentService {
                oldStatus,
                savedPayment.getStatus()
        );
+       paymentEventService.publishPaymentConfirmed(savedPayment);
 
         return paymentMapper.toPaymentStatusResponse(savedPayment);
    }
@@ -94,6 +97,8 @@ public class PaymentService {
                oldStatus,
                savedPayment.getStatus()
        );
+
+       paymentEventService.publishPaymentDeleted(savedPayment);
        return paymentMapper.toPaymentStatusResponse(savedPayment);
    }
 
@@ -133,6 +138,7 @@ public class PaymentService {
                 request.idempotencyKey(),
                 savedPayment.getId()
         );
+        paymentEventService.publishPaymentCreated(savedPayment);
         return paymentMapper.toPaymentResponse(savedPayment);
     }
 
